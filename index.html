@@ -91,7 +91,6 @@
             object-fit: cover;
         }
 
-        /* Thẻ đối tượng bình chọn (Hỗ trợ đa lựa chọn) */
         .item-card {
             background: rgba(255, 255, 255, 0.9);
             border: 2px solid #e2e8f0;
@@ -164,7 +163,6 @@
             box-shadow: 0 25px 50px rgba(0,0,0,0.15);
         }
         
-        /* Ẩn hoàn toàn nút admin, chỉ mở bằng phím tắt Ctrl + Shift + A */
         #secretAdminTrigger {
             position: fixed;
             bottom: 15px;
@@ -182,7 +180,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-10 glass-container">
             
-            <!-- MÀN HÌNH 1: ĐĂNG NHẬP THÔNG TIN -->
+            <!-- MÀN HÌNH 1: ĐĂNG NHẬP -->
             <div id="screenLogin" class="screen active text-center py-4">
                 <div class="mb-4">
                     <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 shadow-sm" style="width: 70px; height: 70px; background: rgba(99,102,241,0.1);">
@@ -243,9 +241,9 @@
                 
                 <div id="alertBox"></div>
 
-                <div class="mb-5">
+                <div id="votingSection" class="mb-5">
                     <div id="pollItemsContainer" class="row g-4"></div>
-                    <div class="text-center mt-5">
+                    <div class="text-center mt-5" id="submitBtnWrapper">
                         <button class="btn btn-success btn-lg px-5 py-3 rounded-pill shadow fw-bold" onclick="submitVote()" style="background: var(--success-gradient); border:none;">
                             <i class="fa-solid fa-paper-plane me-2"></i> Xác Nhận Gửi Phiếu Bầu
                         </button>
@@ -264,7 +262,7 @@
     </div>
 </div>
 
-<!-- NÚT MỞ NHANH ADMIN (ẨN GÓC DƯỚI CÙNG BÊN PHẢI HOẶC BẤM CTRL+SHIFT+A) -->
+<!-- NÚT MỞ NHANH ADMIN (ẨN GÓC DƯỚI CÙNG HOẶC DÙNG CTRL+SHIFT+A) -->
 <div id="secretAdminTrigger">
     <button class="btn btn-dark btn-sm rounded-circle shadow" data-bs-toggle="modal" data-bs-target="#adminModal" title="Quản trị viên">
         <i class="fa-solid fa-lock"></i>
@@ -291,26 +289,44 @@
                 </div>
 
                 <div id="adminContentSection" style="display:none;">
-                    <div class="row g-3 mb-4 bg-light p-3 rounded-4 border">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Số lượt bình chọn tối đa mỗi người / 1 chủ đề:</label>
-                            <input type="number" id="cfgMaxVotes" class="form-control bg-white" min="1" value="3">
-                            <small class="text-muted">Ví dụ đặt là 3 thì mỗi người được chọn tích đúng 3 người.</small>
+                    <ul class="nav nav-pills mb-3" id="adminTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold" id="polls-tab" data-bs-toggle="pill" data-bs-target="#pollsTabPane" type="button">Quản Lý Chủ Đề</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="users-tab" data-bs-toggle="pill" data-bs-target="#usersTabPane" type="button">Gia Hạn / Mở Khóa Người Dùng</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="adminTabContent">
+                        <!-- TAB 1: Cấu hình chủ đề -->
+                        <div class="tab-pane fade show active" id="pollsTabPane">
+                            <div class="row g-3 mb-4 bg-light p-3 rounded-4 border">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Số lượt bình chọn tối đa mỗi người / 1 chủ đề:</label>
+                                    <input type="number" id="cfgMaxVotes" class="form-control bg-white" min="1" value="3">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold text-dark mb-0">Danh Sách Cuộc Bình Chọn</h5>
+                                <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="addPollBlock()">
+                                    <i class="fa-solid fa-plus me-1"></i> Thêm Chủ Đề Mới
+                                </button>
+                            </div>
+                            <div id="adminPollsWrapper" style="max-height: 400px; overflow-y: auto;" class="p-2 border rounded-4 bg-light mb-3"></div>
+                            <button class="btn btn-success w-100 py-3 fw-bold rounded-pill shadow" onclick="saveAdminData()" style="background: var(--success-gradient); border:none;">
+                                <i class="fa-solid fa-cloud-arrow-up me-2"></i> Lưu Cấu Hình Lên Hệ Thống
+                            </button>
+                        </div>
+
+                        <!-- TAB 2: Quản lý mở khóa / gia hạn phiếu -->
+                        <div class="tab-pane fade" id="usersTabPane">
+                            <p class="text-muted">Danh sách những người đã bỏ phiếu. Bấm <b>Gia hạn/Mở khóa</b> nếu bạn muốn cho phép họ bỏ phiếu lại từ đầu.</p>
+                            <div id="adminVotedUsersList" style="max-height: 450px; overflow-y: auto;" class="p-3 border rounded-4 bg-light">
+                                <!-- Render danh sách người đã vote -->
+                            </div>
                         </div>
                     </div>
-
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-dark mb-0">Quản Lý Các Cuộc Bình Chọn</h5>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="addPollBlock()">
-                            <i class="fa-solid fa-plus me-1"></i> Thêm Chủ Đề Mới
-                        </button>
-                    </div>
-
-                    <div id="adminPollsWrapper" style="max-height: 450px; overflow-y: auto;" class="p-2 border rounded-4 bg-light mb-3"></div>
-
-                    <button class="btn btn-success w-100 py-3 fw-bold rounded-pill shadow" onclick="saveAdminData()" style="background: var(--success-gradient); border:none;">
-                        <i class="fa-solid fa-cloud-arrow-up me-2"></i> Lưu Toàn Bộ Cấu Hình Lên Hệ Thống
-                    </button>
                 </div>
             </div>
         </div>
@@ -320,16 +336,15 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ⚠️ DÁN LINK GOOGLE APPS SCRIPT CỦA BẠN VÀO ĐÂY ⚠️
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8irS5eiAq69X83gQb69RvasNZodxefIHM38rSTf2Tv_sKn_HENTtZebwE2iDtMWIN/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwaOue1XrRX_F3nuRbGLyxjqBWALQOsDJzZQw3BClD4QE1q6C9uhq8PxBVnzIIBJd-y/exec";
 
     let appData = { config: { maxVotesPerPoll: 3, polls: [] }, votes: [] };
     let currentUser = { name: "", cls: "" };
     let activePollId = null;
-    let selectedTargetIds = []; // Mảng chứa các đối tượng được chọn (hỗ trợ nhiều phiếu)
+    let selectedTargetIds = [];
 
     document.addEventListener("DOMContentLoaded", function() {
         fetchData();
-        // Phím tắt mở nhanh Admin: Ctrl + Shift + A
         document.addEventListener('keydown', function(e) {
             if(e.ctrlKey && e.shiftKey && e.key.toUpperCase() === 'A') {
                 var adminModal = new bootstrap.Modal(document.getElementById('adminModal'));
@@ -387,13 +402,25 @@
         }
 
         polls.forEach(poll => {
+            // Kiểm tra xem người dùng hiện tại đã bầu chủ đề này chưa
+            let hasVoted = appData.votes.some(row => 
+                String(row[1]).trim().toLowerCase() === currentUser.name.toLowerCase() &&
+                String(row[2]).trim().toLowerCase() === currentUser.cls.toLowerCase() &&
+                String(row[3]) === String(poll.id)
+            );
+
+            let badgeHtml = hasVoted 
+                ? '<span class="badge bg-success mb-2 px-3 py-1 rounded-pill"><i class="fa-solid fa-check-circle me-1"></i> Đã hoàn thành bình chọn</span>'
+                : '<span class="badge bg-primary mb-2 px-3 py-1 rounded-pill"><i class="fa-solid fa-clock me-1"></i> Đang mở bình chọn</span>';
+
             container.innerHTML += `
                 <div class="col-md-6">
                     <div class="poll-card shadow-sm" onclick="openPoll('${poll.id}')">
                         <img src="${poll.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600'}" class="poll-img" alt="Cover">
                         <div class="p-4">
+                            ${badgeHtml}
                             <h4 class="fw-bold text-dark mb-2">${poll.title}</h4>
-                            <p class="text-primary fw-semibold small mb-0">Tham gia bình chọn & xem kết quả <i class="fa-solid fa-arrow-right ms-1"></i></p>
+                            <p class="text-primary fw-semibold small mb-0">Xem chi tiết & kết quả <i class="fa-solid fa-arrow-right ms-1"></i></p>
                         </div>
                     </div>
                 </div>
@@ -409,10 +436,24 @@
 
         const maxAllowed = appData.config.maxVotesPerPoll || 1;
         document.getElementById("currentPollTitle").innerText = poll.title;
-        document.getElementById("pollInstruction").innerHTML = `<i class="fa-solid fa-circle-info me-1"></i> Bạn được quyền chọn tối đa <b>${maxAllowed}</b> đối tượng trong chủ đề này.`;
         document.getElementById("alertBox").innerHTML = "";
-        
-        renderPollItems(poll.items);
+
+        // Kiểm tra người dùng đã bầu chủ đề này chưa
+        let hasVoted = appData.votes.some(row => 
+            String(row[1]).trim().toLowerCase() === currentUser.name.toLowerCase() &&
+            String(row[2]).trim().toLowerCase() === currentUser.cls.toLowerCase() &&
+            String(row[3]) === String(pollId)
+        );
+
+        if(hasVoted) {
+            document.getElementById("pollInstruction").innerHTML = `<i class="fa-solid fa-lock text-danger me-1"></i> Bạn đã hoàn thành bình chọn cho chủ đề này. Quyền bầu chọn đã bị khóa!`;
+            document.getElementById("votingSection").style.display = "none"; // Ẩn phần chọn đối tượng & nút gửi
+        } else {
+            document.getElementById("pollInstruction").innerHTML = `<i class="fa-solid fa-circle-info me-1"></i> Bạn được quyền chọn tối đa <b>${maxAllowed}</b> đối tượng trong chủ đề này.`;
+            document.getElementById("votingSection").style.display = "block";
+            renderPollItems(poll.items);
+        }
+
         renderLeaderboard(poll);
         switchScreen('screenPollDetail');
     }
@@ -420,6 +461,7 @@
     function backToPollsList() {
         switchScreen('screenPollsList');
         fetchData();
+        renderPollsList();
     }
 
     function renderPollItems(items) {
@@ -447,11 +489,9 @@
         const card = document.getElementById(`card-${id}`);
 
         if(index > -1) {
-            // Đã chọn rồi -> Bỏ chọn
             selectedTargetIds.splice(index, 1);
             card.classList.remove('selected');
         } else {
-            // Chưa chọn -> Kiểm tra xem đã đủ giới hạn chưa
             if(selectedTargetIds.length >= maxAllowed) {
                 showAlert(`Bạn chỉ được phép chọn tối đa ${maxAllowed} đối tượng!`, "warning");
                 return;
@@ -462,7 +502,6 @@
     }
 
     function submitVote() {
-        const maxAllowed = appData.config.maxVotesPerPoll || 1;
         if(selectedTargetIds.length === 0) {
             showAlert("Vui lòng chọn ít nhất một đối tượng trước khi xác nhận!", "warning");
             return;
@@ -470,7 +509,6 @@
 
         showAlert("Đang gửi phiếu bầu...", "info");
 
-        // Gửi danh sách các ID ngăn cách bởi dấu phẩy
         const targetsParam = selectedTargetIds.join(",");
         const url = `${WEB_APP_URL}?action=vote&name=${encodeURIComponent(currentUser.name)}&cls=${encodeURIComponent(currentUser.cls)}&pollId=${encodeURIComponent(activePollId)}&targetId=${encodeURIComponent(targetsParam)}`;
         
@@ -479,21 +517,17 @@
         .then(res => {
             if(res.status === "success") {
                 showAlert(res.message, "success");
-                fetchData_AndUpdateView();
+                // Cập nhật lại dữ liệu ngay lập tức và ẩn khu vực bình chọn
+                fetch(WEB_APP_URL + "?action=getData")
+                .then(r => r.json())
+                .then(d => {
+                    appData = d;
+                    openPoll(activePollId); // Tải lại chi tiết cuộc thi để khóa giao diện
+                });
             } else {
                 showAlert(res.message, "danger");
             }
         }).catch(err => showAlert("Lỗi kết nối máy chủ!", "danger"));
-    }
-
-    function fetchData_AndUpdateView() {
-        fetch(WEB_APP_URL + "?action=getData")
-        .then(res => res.json())
-        .then(data => {
-            appData = data;
-            const poll = appData.config.polls.find(p => p.id == activePollId);
-            if(poll) renderLeaderboard(poll);
-        });
     }
 
     function renderLeaderboard(poll) {
@@ -507,13 +541,10 @@
 
         appData.votes.forEach(row => {
             let rPollId = String(row[3]);
-            let rTargetIds = String(row[4]).split(","); // Hỗ trợ đếm nhiều đối tượng trong 1 hàng phiếu
-            
+            let rTargetIds = String(row[4]).split(",");
             if(rPollId == poll.id) {
                 rTargetIds.forEach(tId => {
-                    if(counts[tId]) {
-                        counts[tId].votes += 1;
-                    }
+                    if(counts[tId]) { counts[tId].votes += 1; }
                 });
             }
         });
@@ -564,13 +595,60 @@
     function populateAdminUI() {
         document.getElementById("cfgMaxVotes").value = appData.config.maxVotesPerPoll || 3;
         
+        // Render danh sách quản lý chủ đề
         const wrapper = document.getElementById("adminPollsWrapper");
         wrapper.innerHTML = "";
         if(appData.config.polls) {
-            appData.config.polls.forEach(poll => {
-                addPollBlockToUI(poll);
-            });
+            appData.config.polls.forEach(poll => { addPollBlockToUI(poll); });
         }
+
+        // Render danh sách người dùng đã bỏ phiếu để Admin gia hạn/mở khóa
+        renderAdminVotedUsers();
+    }
+
+    function renderAdminVotedUsers() {
+        const container = document.getElementById("adminVotedUsersList");
+        container.innerHTML = "";
+
+        if(!appData.votes || appData.votes.length === 0) {
+            container.innerHTML = "<p class='text-muted text-center py-3'>Chưa có lượt bình chọn nào trên hệ thống.</p>";
+            return;
+        }
+
+        appData.votes.forEach((row, idx) => {
+            let timestamp = row[0];
+            let name = row[1];
+            let cls = row[2];
+            let pollId = row[3];
+
+            // Tìm tên chủ đề tương ứng
+            let pollObj = (appData.config.polls || []).find(p => p.id == pollId);
+            let pollTitleName = pollObj ? pollObj.title : "Chủ đề không xác định";
+
+            container.innerHTML += `
+                <div class="d-flex justify-content-between align-items-center bg-white p-3 mb-2 rounded-3 border shadow-sm">
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">${name} <span class="badge bg-secondary-subtle text-secondary ms-1">Lớp ${cls}</span></h6>
+                        <p class="small text-muted mb-0"><i class="fa-solid fa-folder me-1 text-primary"></i> Chủ đề: <b>${pollTitleName}</b></p>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="resetUserVote('${name}', '${cls}', '${pollId}')">
+                        <i class="fa-solid fa-rotate-right me-1"></i> Gia hạn / Mở khóa
+                    </button>
+                </div>
+            `;
+        });
+    }
+
+    function resetUserVote(name, cls, pollId) {
+        if(!confirm(`Bạn có chắc chắn muốn mở khóa/gia hạn cho học sinh ${name} (Lớp ${cls}) ở chủ đề này không?`)) return;
+
+        fetch(`${WEB_APP_URL}?action=resetVotes&name=${encodeURIComponent(name)}&cls=${encodeURIComponent(cls)}&pollId=${encodeURIComponent(pollId)}`)
+        .then(res => res.json())
+        .then(res => {
+            alert(res.message);
+            fetchData();
+            setTimeout(() => { populateAdminUI(); }, 500);
+        }).catch(err => alert("Lỗi kết nối máy chủ!"));
     }
 
     function addPollBlock() {
@@ -650,14 +728,11 @@
         itemsWrapper.appendChild(itemDiv);
     }
 
-    // Chuyển đổi file ảnh từ máy thành chuỗi Base64 để lưu trực tiếp vào Sheet
     function convertFileToBase64(input, type) {
         const file = input.files[0];
         if(!file) return;
-
-        // Giới hạn dung lượng ảnh dưới 1MB để tránh làm quá tải Google Sheet
         if(file.size > 1024 * 1024) {
-            alert("Ảnh tải lên quá lớn! Vui lòng chọn ảnh có dung lượng dưới 1MB để hệ thống chạy mượt mà.");
+            alert("Ảnh tải lên quá lớn! Vui lòng chọn ảnh dưới 1MB.");
             input.value = "";
             return;
         }
@@ -666,7 +741,6 @@
         reader.onload = function(e) {
             const base64String = e.target.result;
             const container = type === 'poll' ? input.closest('.row') : input.closest('.item-row');
-            
             container.querySelector(type === 'poll' ? '.poll-img' : '.item-img').value = base64String;
             const thumb = container.querySelector('.preview-thumb');
             thumb.src = base64String;
@@ -677,7 +751,6 @@
 
     function saveAdminData() {
         const maxVotesPerPoll = parseInt(document.getElementById("cfgMaxVotes").value) || 3;
-        
         const pollBlocks = document.querySelectorAll(".poll-admin-block");
         const polls = [];
 
@@ -688,7 +761,7 @@
             
             const itemRows = block.querySelectorAll(".item-row");
             const items = [];
-            itemRows.forEach(row => {
+            itemRows.exports = itemRows.forEach(row => {
                 const id = row.querySelector(".item-id").value;
                 const name = row.querySelector(".item-name").value;
                 const imageItem = row.querySelector(".item-img").value;
@@ -700,7 +773,23 @@
             polls.push({ id: pollId, title, image, items });
         });
 
-        const payload = { maxVotesPerPoll, polls };
+        // Sửa đoạn map items ngắn gọn tránh lỗi
+        const finalPolls = [];
+        pollBlocks.forEach(block => {
+            const pollId = block.dataset.pollId;
+            const title = block.querySelector(".poll-title").value;
+            const image = block.querySelector(".poll-img").value;
+            const items = [];
+            block.querySelectorAll(".item-row").forEach(row => {
+                const id = row.querySelector(".item-id").value;
+                const name = row.querySelector(".item-name").value;
+                const imageItem = row.querySelector(".item-img").value;
+                if(name.trim() !== "") items.push({ id, name, image: imageItem });
+            });
+            finalPolls.push({ id: pollId, title, image, items });
+        });
+
+        const payload = { maxVotesPerPoll, polls: finalPolls };
 
         alert("Đang lưu dữ liệu lên hệ thống...");
 
@@ -711,7 +800,7 @@
         .then(res => res.json())
         .then(res => {
             if(res.status === "success") {
-                alert("Lưu cấu hình thành công! Hãy tải lại trang web.");
+                alert("Lưu cấu hình thành công!");
                 location.reload();
             } else {
                 alert("Lỗi: " + res.message);
