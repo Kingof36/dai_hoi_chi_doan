@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Bình Chọn Trực Tuyến</title>
+    <!-- Google Fonts & Bootstrap 5 -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --backdrop-blur: blur(16px);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f3e8ff 0%, #e0e7ff 50%, #ccfbf1 100%);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+
+        .screen { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
+        .screen.active { display: block; opacity: 1; }
+
+        /* Hiệu ứng Glassmorphism sang trọng */
+        .glass-container {
+            background: var(--card-bg);
+            backdrop-filter: var(--backdrop-blur);
+            -webkit-backdrop-filter: var(--backdrop-blur);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            padding: 40px;
+            margin-top: 50px;
+            margin-bottom: 50px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Nút bấm hiện đại */
+        .btn-custom-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        .btn-custom-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            color: white;
+        }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1.5px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+        .form-control:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+        }
+
+        /* Thẻ chủ đề (Poll Card) */
+        .poll-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1.5px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            height: 100%;
+        }
+        .poll-card:hover {
+            transform: translateY(-6px);
+            border-color: #6366f1;
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.15);
+        }
+        .poll-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        /* Thẻ đối tượng bình chọn (Item Card) */
+        .item-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: 100%;
+            position: relative;
+        }
+        .item-card:hover {
+            transform: translateY(-4px);
+            border-color: #cbd5e1;
+        }
+        .item-card.selected {
+            border-color: #10b981;
+            background: linear-gradient(to bottom, #f0fdf4, #dcfce7);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
+        }
+        .item-card.selected::after {
+            content: '\f058';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            color: #10b981;
+            font-size: 1.25rem;
+        }
+        .item-img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        /* Bảng xếp hạng (Leaderboard) */
+        .rank-item {
+            background: white;
+            border-radius: 14px;
+            padding: 14px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid #f1f5f9;
+            transition: transform 0.2s;
+        }
+        .rank-item:hover {
+            transform: scale(1.01);
+        }
+        .rank-img {
+            width: 55px;
+            height: 55px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-right: 16px;
+        }
+        .rank-badge {
+            font-size: 1.1rem;
+            font-weight: 800;
+            width: 40px;
+            text-align: center;
+            color: #64748b;
+        }
+        .rank-item:nth-child(1) .rank-badge { color: #f59e0b; } /* Top 1 Vàng */
+        .rank-item:nth-child(2) .rank-badge { color: #94a3b8; } /* Top 2 Bạc */
+        .rank-item:nth-child(3) .rank-badge { color: #d97706; } /* Top 3 Đồng */
+
+        /* Modal styling */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 glass-container">
+            
+            <!-- MÀN HÌNH 1: NHẬP THÔNG TIN (LOGIN) -->
+            <div id="screenLogin" class="screen active text-center py-4">
+                <div class="mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-indigo-subtle text-primary rounded-circle mb-3 shadow-sm" style="width: 70px; height: 70px; background: rgba(99,102,241,0.1);">
+                        <i class="fa-solid fa-check-to-slot fa-2x text-indigo" style="color: #6366f1;"></i>
+                    </div>
+                    <h1 class="fw-extrabold text-dark mb-2">Hệ Thống Bình Chọn Trực Tuyến</h1>
+                    <p class="text-muted">Vui lòng nhập thông tin của bạn để tiếp tục tham gia</p>
+                </div>
+
+                <div class="row justify-content-center">
+                    <div class="col-md-5">
+                        <div class="text-start">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-uppercase text-secondary">Họ và Tên</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+                                    <input type="text" id="inputName" class="form-control border-start-0 ps-0" placeholder="Nhập họ và tên...">
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold small text-uppercase text-secondary">Lớp</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-graduation-cap text-muted"></i></span>
+                                    <input type="text" id="inputClass" class="form-control border-start-0 ps-0" placeholder="Ví dụ: 12A1...">
+                                </div>
+                            </div>
+                            <button class="btn btn-custom-primary w-100 py-3 shadow" onclick="handleLogin()">
+                                <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Vào Trang Bình Chọn
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <button class="btn btn-light btn-sm text-secondary border px-3 py-2 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#adminModal">
+                        <i class="fa-solid fa-gear me-1"></i> Quản Trị Viên
+                    </button>
+                </div>
+            </div>
+
+            <!-- MÀN HÌNH 2: DANH SÁCH CHỦ ĐỀ -->
+            <div id="screenPollsList" class="screen">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                    <div>
+                        <h3 class="fw-bold text-dark mb-1">Danh Sách Các Chủ Đề</h3>
+                        <p class="text-muted small mb-0"><i class="fa-solid fa-id-badge me-1 text-primary"></i> Đang tham gia với tư cách: <b id="userBadge" class="text-dark"></b></p>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="logout()">
+                        <i class="fa-solid fa-rotate-left me-1"></i> Đổi thông tin
+                    </button>
+                </div>
+                
+                <div id="pollsContainer" class="row g-4">
+                    <!-- Render tự động -->
+                </div>
+            </div>
+
+            <!-- MÀN HÌNH 3: CHI TIẾT BÌNH CHỌN & XẾP HẠNG -->
+            <div id="screenPollDetail" class="screen">
+                <button class="btn btn-light border btn-sm mb-4 rounded-pill px-3 shadow-sm" onclick="backToPollsList()">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách chủ đề
+                </button>
+                
+                <h2 id="currentPollTitle" class="fw-bold text-dark mb-4 text-center"></h2>
+                
+                <div id="alertBox"></div>
+
+                <div class="mb-5">
+                    <h5 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-hand-pointer me-2 text-primary"></i> Lựa chọn đối tượng yêu thích của bạn:</h5>
+                    <div id="pollItemsContainer" class="row g-4"></div>
+                    <div class="text-center mt-5">
+                        <button class="btn btn-success btn-lg px-5 py-3 rounded-pill shadow fw-bold" onclick="submitVote()" style="background: var(--success-gradient); border:none;">
+                            <i class="fa-solid fa-paper-plane me-2"></i> Xác Nhận Gửi Phiếu
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="my-5 text-muted opacity-25">
+
+                <div>
+                    <h3 class="fw-bold mb-4 text-center text-dark"><i class="fa-solid fa-trophy text-warning me-2"></i> Bảng Tổng Kết Kết Quả</h3>
+                    <div id="leaderboardContainer" class="col-lg-8 mx-auto">
+                        <!-- Sắp xếp thời gian thực -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- MODAL QUẢN TRỊ VIÊN -->
+<div class="modal fade" id="adminModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content p-3">
+            <div class="modal-header border-0 pb-0">
+                <h4 class="modal-title fw-bold text-dark"><i class="fa-solid fa-shield-halved text-primary me-2"></i> Bảng Điều Khiển Quản Trị Viên</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="adminLoginSection" class="py-4 text-center">
+                    <div class="col-md-5 mx-auto">
+                        <div class="mb-3 text-start">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">Mật khẩu Admin</label>
+                            <input type="password" id="adminPass" class="form-control" placeholder="Nhập mật khẩu quản trị...">
+                        </div>
+                        <button class="btn btn-custom-primary w-100 py-2" onclick="checkAdminPass()">Đăng Nhập Quản Trị</button>
+                    </div>
+                </div>
+
+                <div id="adminContentSection" style="display:none;">
+                    <div class="row g-3 mb-4 bg-light p-3 rounded-4 border">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Link Ảnh Nền Toàn Trang (URL):</label>
+                            <input type="text" id="cfgBg" class="form-control bg-white" placeholder="https://...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Giới hạn số phiếu tối đa mỗi người / 1 chủ đề:</label>
+                            <input type="number" id="cfgMaxVotes" class="form-control bg-white" min="1" value="1">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-dark mb-0">Quản Lý Các Cuộc Bình Chọn</h5>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="addPollBlock()">
+                            <i class="fa-solid fa-plus me-1"></i> Thêm Chủ Đề Mới
+                        </button>
+                    </div>
+
+                    <div id="adminPollsWrapper" style="max-height: 450px; overflow-y: auto;" class="p-2 border rounded-4 bg-light mb-3">
+                        <!-- Render block quản lý chủ đề -->
+                    </div>
+
+                    <button class="btn btn-success w-100 py-3 fw-bold rounded-pill shadow" onclick="saveAdminData()" style="background: var(--success-gradient); border:none;">
+                        <i class="fa-solid fa-cloud-arrow-up me-2"></i> Lưu Toàn Bộ Cấu Hình Lên Hệ Thống
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ⚠️ THAY LINK GOOGLE APPS SCRIPT CỦA BẠN VÀO ĐÂY ⚠️
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8irS5eiAq69X83gQb69RvasNZodxefIHM38rSTf2Tv_sKn_HENTtZebwE2iDtMWIN/exec";
+
+    let appData = { config: { bgImage: "", maxVotesPerPoll: 1, polls: [] }, votes: [] };
+    let currentUser = { name: "", cls: "" };
+    let activePollId = null;
+    let selectedTargetId = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        fetchData();
+    });
+
+    function fetchData() {
+        fetch(WEB_APP_URL + "?action=getData")
+        .then(res => res.json())
+        .then(data => {
+            appData = data;
+            if(data.config.bgImage) {
+                document.body.style.backgroundImage = `url('${data.config.bgImage}')`;
+            }
+        }).catch(err => console.error("Lỗi kết nối:", err));
+    }
+
+    function handleLogin() {
+        const name = document.getElementById("inputName").value.trim();
+        const cls = document.getElementById("inputClass").value.trim();
+        if(!name || !cls) {
+            alert("Vui lòng điền đầy đủ Họ tên và Lớp của bạn!");
+            return;
+        }
+        currentUser.name = name;
+        currentUser.cls = cls;
+        document.getElementById("userBadge").innerText = `${name} (Lớp ${cls})`;
+        
+        fetchData();
+        switchScreen('screenPollsList');
+        renderPollsList();
+    }
+
+    function logout() {
+        switchScreen('screenLogin');
+    }
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => {
+            s.classList.remove('active');
+            s.style.display = 'none';
+        });
+        const target = document.getElementById(screenId);
+        target.style.display = 'block';
+        setTimeout(() => target.classList.add('active'), 50);
+    }
+
+    function renderPollsList() {
+        const container = document.getElementById("pollsContainer");
+        container.innerHTML = "";
+        const polls = appData.config.polls || [];
+
+        if(polls.length === 0) {
+            container.innerHTML = "<div class='text-center py-5 text-muted'>Chưa có cuộc bình chọn nào được tạo. Vui lòng quay lại sau!</div>";
+            return;
+        }
+
+        polls.forEach(poll => {
+            container.innerHTML += `
+                <div class="col-md-6">
+                    <div class="poll-card shadow-sm" onclick="openPoll('${poll.id}')">
+                        <img src="${poll.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600'}" class="poll-img" alt="Cover">
+                        <div class="p-4">
+                            <h4 class="fw-bold text-dark mb-2">${poll.title}</h4>
+                            <p class="text-primary fw-semibold small mb-0">Tham gia bình chọn & xem kết quả <i class="fa-solid fa-arrow-right ms-1"></i></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function openPoll(pollId) {
+        activePollId = pollId;
+        selectedTargetId = null;
+        const poll = appData.config.polls.find(p => p.id == pollId);
+        if(!poll) return;
+
+        document.getElementById("currentPollTitle").innerText = poll.title;
+        document.getElementById("alertBox").innerHTML = "";
+        
+        renderPollItems(poll.items);
+        renderLeaderboard(poll);
+        switchScreen('screenPollDetail');
+    }
+
+    function backToPollsList() {
+        switchScreen('screenPollsList');
+        fetchData();
+    }
+
+    function renderPollItems(items) {
+        const container = document.getElementById("pollItemsContainer");
+        container.innerHTML = "";
+        if(!items || items.length === 0) {
+            container.innerHTML = "<div class='text-center py-4 text-muted col-12'>Chưa có đối tượng nào trong chủ đề này.</div>";
+            return;
+        }
+        items.forEach(item => {
+            container.innerHTML += `
+                <div class="col-md-4 col-sm-6">
+                    <div class="item-card" id="card-${item.id}" onclick="selectItem('${item.id}')">
+                        <img src="${item.image || 'https://via.placeholder.com/150'}" class="item-img" alt="${item.name}">
+                        <h5 class="fw-bold text-dark mb-0">${item.name}</h5>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function selectItem(id) {
+        selectedTargetId = id;
+        document.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+        document.getElementById(`card-${id}`).classList.add('selected');
+    }
+
+    function submitVote() {
+        if(!selectedTargetId) {
+            showAlert("Vui lòng chọn một đối tượng trước khi xác nhận!", "warning");
+            return;
+        }
+
+        showAlert("Đang gửi phiếu bầu...", "info");
+
+        const url = `${WEB_APP_URL}?action=vote&name=${encodeURIComponent(currentUser.name)}&cls=${encodeURIComponent(currentUser.cls)}&pollId=${encodeURIComponent(activePollId)}&targetId=${encodeURIComponent(selectedTargetId)}`;
+        
+        fetch(url)
+        .then(res => res.json())
+        .then(res => {
+            if(res.status === "success") {
+                showAlert(res.message, "success");
+                fetchData_AndUpdateView();
+            } else {
+                showAlert(res.message, "danger");
+            }
+        }).catch(err => showAlert("Lỗi kết nối máy chủ!", "danger"));
+    }
+
+    function fetchData_AndUpdateView() {
+        fetch(WEB_APP_URL + "?action=getData")
+        .then(res => res.json())
+        .then(data => {
+            appData = data;
+            const poll = appData.config.polls.find(p => p.id == activePollId);
+            if(poll) renderLeaderboard(poll);
+        });
+    }
+
+    function renderLeaderboard(poll) {
+        const container = document.getElementById("leaderboardContainer");
+        container.innerHTML = "";
+
+        let counts = {};
+        poll.items.forEach(it => {
+            counts[it.id] = { id: it.id, name: it.name, image: it.image, votes: 0 };
+        });
+
+        appData.votes.forEach(row => {
+            let rPollId = String(row[3]);
+            let rTargetId = String(row[4]);
+            if(rPollId == poll.id && counts[rTargetId]) {
+                counts[rTargetId].votes += 1;
+            }
+        });
+
+        let list = Object.values(counts);
+        // Sắp xếp: Nhiều phiếu nhất lên trên, bằng nhau giữ nguyên, ít hơn ở dưới
+        list.sort((a, b) => b.votes - a.votes);
+
+        if(list.length === 0) {
+            container.innerHTML = "<p class='text-muted text-center'>Chưa có dữ liệu tổng kết.</p>";
+            return;
+        }
+
+        list.forEach((item, index) => {
+            container.innerHTML += `
+                <div class="rank-item">
+                    <div class="rank-badge">#${index + 1}</div>
+                    <img src="${item.image || 'https://via.placeholder.com/150'}" class="rank-img" alt="${item.name}">
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1 fw-bold text-dark">${item.name}</h5>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill fw-semibold">${item.votes} phiếu bầu</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function showAlert(msg, type) {
+        let alertClass = type === 'success' ? 'alert-success' : (type === 'warning' ? 'alert-warning' : 'alert-info');
+        document.getElementById("alertBox").innerHTML = `
+            <div class="alert ${alertClass} alert-dismissible fade show rounded-4 shadow-sm" role="alert">
+                ${msg}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+    }
+
+    // --- QUẢN TRỊ VIÊN (ADMIN) ---
+    function checkAdminPass() {
+        const pass = document.getElementById("adminPass").value;
+        if(pass === "Tuanvy2009@") {
+            document.getElementById("adminLoginSection").style.display = "none";
+            document.getElementById("adminContentSection").style.display = "block";
+            populateAdminUI();
+        } else {
+            alert("Mật khẩu quản trị không chính xác!");
+        }
+    }
+
+    function populateAdminUI() {
+        document.getElementById("cfgBg").value = appData.config.bgImage || "";
+        document.getElementById("cfgMaxVotes").value = appData.config.maxVotesPerPoll || 1;
+        
+        const wrapper = document.getElementById("adminPollsWrapper");
+        wrapper.innerHTML = "";
+        if(appData.config.polls) {
+            appData.config.polls.forEach(poll => {
+                addPollBlockToUI(poll);
+            });
+        }
+    }
+
+    function addPollBlock() {
+        const newPoll = {
+            id: "poll_" + Date.now(),
+            title: "Chủ đề bình chọn mới",
+            image: "",
+            items: []
+        };
+        addPollBlockToUI(newPoll);
+    }
+
+    function addPollBlockToUI(poll) {
+        const wrapper = document.getElementById("adminPollsWrapper");
+        const div = document.createElement("div");
+        div.className = "card mb-3 p-3 poll-admin-block border-0 shadow-sm rounded-4";
+        div.dataset.pollId = poll.id;
+        
+        let itemsHtml = "";
+        if(poll.items) {
+            poll.items.forEach(it => {
+                itemsHtml += `
+                    <div class="input-group mb-2 item-row">
+                        <input type="text" class="form-control item-id" value="${it.id}" hidden>
+                        <input type="text" class="form-control item-name" placeholder="Tên đối tượng" value="${it.name}">
+                        <input type="text" class="form-control item-img" placeholder="Link ảnh (URL)" value="${it.image}">
+                        <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+                    </div>`;
+            });
+        }
+
+        div.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-primary mb-0"><i class="fa-solid fa-folder-open me-1"></i> Chủ Đề Bình Chọn</h6>
+                <button class="btn btn-sm btn-outline-danger rounded-pill px-2" onclick="this.closest('.poll-admin-block').remove()"><i class="fa-solid fa-trash me-1"></i> Xóa Chủ Đề</button>
+            </div>
+            <div class="row g-2 mb-2">
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">Tiêu đề:</label>
+                    <input type="text" class="form-control poll-title" value="${poll.title}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">Link ảnh đại diện chủ đề (URL):</label>
+                    <input type="text" class="form-control poll-img" value="${poll.image || ''}" placeholder="https://...">
+                </div>
+            </div>
+            <div class="p-3 border rounded-3 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold small text-secondary">Danh sách đối tượng (Thứ/Con/Vật/Người):</span>
+                    <button class="btn btn-sm btn-outline-primary rounded-pill px-2" onclick="addItemToPollBlock(this)"><i class="fa-solid fa-plus me-1"></i> Thêm đối tượng</button>
+                </div>
+                <div class="items-wrapper">${itemsHtml}</div>
+            </div>
+        `;
+        wrapper.appendChild(div);
+    }
+
+    function addItemToPollBlock(btn) {
+        const itemsWrapper = btn.closest('.card').querySelector('.items-wrapper');
+        const uniqueItemId = "item_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "input-group mb-2 item-row";
+        itemDiv.innerHTML = `
+            <input type="text" class="form-control item-id" value="${uniqueItemId}" hidden>
+            <input type="text" class="form-control item-name" placeholder="Tên đối tượng">
+            <input type="text" class="form-control item-img" placeholder="Link ảnh (URL)">
+            <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+        `;
+        itemsWrapper.appendChild(itemDiv);
+    }
+
+    function saveAdminData() {
+        const bgImage = document.getElementById("cfgBg").value;
+        const maxVotesPerPoll = parseInt(document.getElementById("cfgMaxVotes").value) || 1;
+        
+        const pollBlocks = document.querySelectorAll(".poll-admin-block");
+        const polls = [];
+
+        pollBlocks.forEach(block => {
+            const pollId = block.dataset.pollId;
+            const title = block.querySelector(".poll-title").value;
+            const image = block.querySelector(".poll-img").value;
+            
+            const itemRows = block.querySelectorAll(".item-row");
+            const items = [];
+            itemRows.forEach(row => {
+                const id = row.querySelector(".item-id").value;
+                const name = row.querySelector(".item-name").value;
+                const imageItem = row.querySelector(".item-img").value;
+                if(name.trim() !== "") {
+                    items.push({ id, name, image: imageItem });
+                }
+            });
+
+            polls.push({ id: pollId, title, image, items });
+        });
+
+        const payload = { bgImage, maxVotesPerPoll, polls };
+
+        alert("Đang lưu dữ liệu lên hệ thống...");
+
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "saveData", payload: payload })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if(res.status === "success") {
+                alert("Lưu cấu hình thành công! Hãy tải lại trang web.");
+                location.reload();
+            } else {
+                alert("Lỗi: " + res.message);
+            }
+        }).catch(err => alert("Lỗi kết nối khi lưu cấu hình!"));
+    }
+</script>
+
+</body>
+</html>
